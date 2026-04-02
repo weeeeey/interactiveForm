@@ -7,6 +7,7 @@ import { FormProvider, useFormContext } from '@/context/FormContext';
 import FormEditor from '@/components/form-editor/FormEditor';
 import Header from '@/components/ui/header';
 import Button from '@/components/ui/button';
+import ErrorBanner from '@/components/form-editor/error-banner';
 
 function EditPageInner({
     formId,
@@ -19,11 +20,13 @@ function EditPageInner({
 }) {
     const router = useRouter();
     const { validate } = useFormContext();
+    const [errorTrigger, setErrorTrigger] = useState(0);
 
     const handlePreview = () => {
         const result = validate();
         if (!result.valid) {
             setErrorId(result.firstErrorId);
+            setErrorTrigger((prev) => prev + 1);
             if (result.firstErrorItemId) {
                 const cardEl = document.getElementById(
                     `card-${result.firstErrorItemId}`,
@@ -43,33 +46,14 @@ function EditPageInner({
 
     return (
         <>
-            {/* 헤더 */}
-
             <Header>
                 <Button onClick={handlePreview}>
-                    <Eye className="w-4 h-4" />
+                    <Eye className="size-5" />
                     미리보기
                 </Button>
             </Header>
 
-            {/* 에러 배너 */}
-            {errorId && (
-                <div className="sticky top-14 z-10 max-w-3xl mx-auto px-4 sm:px-6 pt-2 min-w-[384px]">
-                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                            <span>⚠</span>
-                            비어있는 항목이 있어요. 모든 질문과 옵션을
-                            채워주세요.
-                        </div>
-                        <button
-                            onClick={() => setErrorId(null)}
-                            className="text-red-400 hover:text-red-600 text-lg leading-none shrink-0"
-                        >
-                            ×
-                        </button>
-                    </div>
-                </div>
-            )}
+            <ErrorBanner errorId={errorId} errorTrigger={errorTrigger} />
 
             <main className="max-w-3xl min-h-screen bg-stone-50 mx-auto px-4 sm:px-6 py-6 min-w-[384px] border-x-2">
                 <FormEditor

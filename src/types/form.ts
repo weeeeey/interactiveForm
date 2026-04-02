@@ -11,6 +11,7 @@ export interface FormItem {
   label: string;
   placeholder?: string; // input, textarea 전용
   options?: FormItemOption[]; // radio, select 전용
+  defaultOptionId?: string; // select 전용 기본값 옵션 ID
 }
 
 export interface Form {
