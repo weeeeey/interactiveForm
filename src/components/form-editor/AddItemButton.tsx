@@ -9,6 +9,7 @@ import {
     AlignLeft,
     Circle,
     ChevronDownSquare,
+    CheckSquare,
 } from 'lucide-react';
 
 interface Props {
@@ -37,6 +38,11 @@ const TYPE_CONFIG: { type: ItemType; label: string; icon: React.ReactNode }[] =
             type: 'select',
             label: '선택지 ',
             icon: <ChevronDownSquare className="w-4 h-4" />,
+        },
+        {
+            type: 'checkbox',
+            label: '체크박스 (다중 선택)',
+            icon: <CheckSquare className="w-4 h-4" />,
         },
     ];
 

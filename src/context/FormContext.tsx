@@ -93,6 +93,7 @@ export function FormProvider({
                 id: generateId(),
                 type,
                 label: '',
+                required: true,
                 ...(type === 'input' || type === 'textarea'
                     ? { placeholder: '' }
                     : {
@@ -229,8 +230,8 @@ export function FormProvider({
                     firstErrorItemId: item.id,
                 };
             }
-            // radio/select: 옵션 없거나 빈 옵션 있으면 에러
-            if (item.type === 'radio' || item.type === 'select') {
+            // radio/select/checkbox: 옵션 없거나 빈 옵션 있으면 에러
+            if (item.type === 'radio' || item.type === 'select' || item.type === 'checkbox') {
                 const options = item.options ?? [];
                 if (options.length === 0) {
                     return {

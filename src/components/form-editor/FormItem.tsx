@@ -4,15 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { FormItem } from '@/types/form';
 import { useFormContext } from '@/context/FormContext';
 import {
-    MoreHorizontal,
     Plus,
     X,
-    Pencil,
     Trash2,
     Type,
     AlignLeft,
     Circle,
     ChevronDownSquare,
+    CheckSquare,
 } from 'lucide-react';
 
 const TYPE_LABEL: Record<FormItem['type'], string> = {
@@ -20,6 +19,7 @@ const TYPE_LABEL: Record<FormItem['type'], string> = {
     textarea: '장문형',
     radio: '라디오',
     select: '선택지 (체크된 옵션은 기본 선택지가 됩니다)',
+    checkbox: '체크박스',
 };
 
 const TYPE_ICON: Record<FormItem['type'], React.ReactNode> = {
@@ -27,6 +27,7 @@ const TYPE_ICON: Record<FormItem['type'], React.ReactNode> = {
     textarea: <AlignLeft className="w-3.5 h-3.5" />,
     radio: <Circle className="w-3.5 h-3.5" />,
     select: <ChevronDownSquare className="w-3.5 h-3.5" />,
+    checkbox: <CheckSquare className="w-3.5 h-3.5" />,
 };
 
 interface Props {
@@ -37,9 +38,7 @@ interface Props {
 export default function FormItemCard({ item, errorId }: Props) {
     const { updateItem, deleteItem, addOption, updateOption, deleteOption } =
         useFormContext();
-    const [menuOpen, setMenuOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
     const labelRef = useRef<HTMLInputElement>(null);
     const optionRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 
@@ -65,20 +64,6 @@ export default function FormItemCard({ item, errorId }: Props) {
         }
     }, [errorId, item.id]);
 
-    // 외부 클릭 시 메뉴 닫기
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(e.target as Node)
-            ) {
-                setMenuOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
-
     const isError =
         errorId === `label-${item.id}` ||
         errorId === `option-${item.id}` ||
@@ -94,48 +79,50 @@ export default function FormItemCard({ item, errorId }: Props) {
             }`}
         >
             {/* 타입 뱃지 */}
-            <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+            <div className="flex items-center justify-between px-4 pt-3.5 pb-2 ">
                 <span className="flex items-center gap-1.5 text-xs text-black font-medium">
                     {TYPE_ICON[item.type]}
                     {TYPE_LABEL[item.type]}
                 </span>
 
-                {/* 더보기 메뉴 */}
-                <div ref={menuRef} className="relative">
-                    <button
-                        onClick={() => setMenuOpen((v) => !v)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all"
-                    >
-                        <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                    {menuOpen && (
-                        <div className="absolute right-0 top-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg py-1 z-10 min-w-[120px]">
-                            <button
-                                onClick={() => {
-                                    setIsEditing(true);
-                                    setMenuOpen(false);
-                                    setTimeout(
-                                        () => labelRef.current?.focus(),
-                                        50,
-                                    );
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
-                            >
-                                <Pencil className="w-3.5 h-3.5" />
-                                수정하기
-                            </button>
-                            <button
-                                onClick={() => {
-                                    deleteItem(item.id);
-                                    setMenuOpen(false);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50"
-                            >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                삭제하기
-                            </button>
+                <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <span className="text-xs font-semibold text-stone-600 select-none">
+                            필수
+                        </span>
+                        <div
+                            className={`relative w-9 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                item.required ? 'bg-indigo-500' : 'bg-stone-300 group-hover:bg-stone-400'
+                            }`}
+                        >
+                            <div
+                                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                                    item.required ? 'translate-x-4' : 'translate-x-0'
+                                }`}
+                            />
                         </div>
-                    )}
+                        <input
+                            type="checkbox"
+                            checked={item.required || false}
+                            onChange={() =>
+                                updateItem(item.id, { required: !item.required })
+                            }
+                            className="sr-only"
+                        />
+                    </label>
+
+                    {/* 구분선 */}
+                    <div className="w-px h-5 bg-stone-200"></div>
+
+                    <button
+                        onClick={() => {
+                            deleteItem(item.id);
+                        }}
+                        className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                        title="삭제하기"
+                    >
+                        <Trash2 className="size-4" />
+                    </button>
                 </div>
             </div>
 
@@ -196,8 +183,10 @@ export default function FormItemCard({ item, errorId }: Props) {
                         />
                     ))}
 
-                {/* Radio / Select 옵션 */}
-                {(item.type === 'radio' || item.type === 'select') && (
+                {/* Radio / Select / Checkbox 옵션 */}
+                {(item.type === 'radio' ||
+                    item.type === 'select' ||
+                    item.type === 'checkbox') && (
                     <div className="space-y-2">
                         {errorId === `option-${item.id}` && (
                             <p className="text-xs text-red-500">
@@ -225,7 +214,7 @@ export default function FormItemCard({ item, errorId }: Props) {
                                     />
                                 ) : (
                                     <span className="text-stone-300 text-sm w-5 text-center shrink-0">
-                                        ○
+                                        {item.type === 'checkbox' ? '□' : '○'}
                                     </span>
                                 )}
                                 <input

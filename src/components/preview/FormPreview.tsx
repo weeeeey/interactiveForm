@@ -34,12 +34,15 @@ export default function FormPreview({ form }: Props) {
                 >
                     <label className="block text-sm font-semibold text-stone-800">
                         {item.label}
-                        <span className="text-red-400 ml-0.5">*</span>
+                        {item.required && (
+                            <span className="text-red-400 ml-0.5" title="필수 항목">*</span>
+                        )}
                     </label>
 
                     {item.type === 'input' && (
                         <input
                             type="text"
+                            required={item.required}
                             placeholder={
                                 item.placeholder || '답변을 입력하세요'
                             }
@@ -49,6 +52,7 @@ export default function FormPreview({ form }: Props) {
 
                     {item.type === 'textarea' && (
                         <textarea
+                            required={item.required}
                             placeholder={
                                 item.placeholder || '답변을 입력하세요'
                             }
@@ -68,7 +72,29 @@ export default function FormPreview({ form }: Props) {
                                         type="radio"
                                         name={`radio-${item.id}`}
                                         value={opt.value}
+                                        required={item.required}
                                         className="w-4 h-4 text-stone-900 border-stone-300 focus:ring-stone-900 bg-white cursor-pointer"
+                                    />
+                                    <span className="text-sm text-stone-700">
+                                        {opt.value}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
+                    {item.type === 'checkbox' && (
+                        <div className="space-y-2.5">
+                            {(item.options ?? []).map((opt) => (
+                                <label
+                                    key={opt.id}
+                                    className="flex items-center gap-2.5 cursor-pointer group"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        name={`checkbox-${item.id}`}
+                                        value={opt.value}
+                                        className="w-4 h-4 rounded text-stone-900 border-stone-300 focus:ring-stone-900 bg-white cursor-pointer"
                                     />
                                     <span className="text-sm text-stone-700">
                                         {opt.value}
@@ -81,6 +107,7 @@ export default function FormPreview({ form }: Props) {
                     {item.type === 'select' && (
                         <div className="relative">
                             <select
+                                required={item.required}
                                 defaultValue={
                                     item.defaultOptionId
                                         ? item.options?.find(
