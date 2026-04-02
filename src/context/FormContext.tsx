@@ -22,6 +22,7 @@ interface FormContextValue {
     updateOption: (itemId: string, optionId: string, value: string) => void;
     deleteOption: (itemId: string, optionId: string) => void;
     updateTitle: (title: string) => void;
+    reorderItem: (oldIndex: number, newIndex: number) => void;
     // validation
     validate: () => {
         valid: boolean;
@@ -213,6 +214,18 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    const reorderItem = useCallback(
+        (oldIndex: number, newIndex: number) => {
+            setFormAndPersist((prev) => {
+                const newItems = [...prev.items];
+                const [moved] = newItems.splice(oldIndex, 1);
+                newItems.splice(newIndex, 0, moved);
+                return { ...prev, items: newItems };
+            });
+        },
+        [setFormAndPersist]
+    );
+
     const validate = useCallback((): {
         valid: boolean;
         firstErrorId: string | null;
@@ -266,6 +279,7 @@ export function FormProvider({
                 updateOption,
                 deleteOption,
                 updateTitle,
+                reorderItem,
                 validate,
             }}
         >

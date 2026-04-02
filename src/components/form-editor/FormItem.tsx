@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { FormItem } from '@/types/form';
 import { useFormContext } from '@/context/FormContext';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
     Plus,
     X,
@@ -12,6 +14,7 @@ import {
     Circle,
     ChevronDownSquare,
     CheckSquare,
+    Menu,
 } from 'lucide-react';
 
 const TYPE_LABEL: Record<FormItem['type'], string> = {
@@ -41,6 +44,20 @@ export default function FormItemCard({ item, errorId }: Props) {
     const [isEditing, setIsEditing] = useState(false);
     const labelRef = useRef<HTMLInputElement>(null);
     const optionRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
 
     // 에러 포커싱
     useEffect(() => {
@@ -72,15 +89,27 @@ export default function FormItemCard({ item, errorId }: Props) {
     return (
         <div
             id={`card-${item.id}`}
-            className={`group relative bg-white border rounded-2xl transition-all ${
-                isError
-                    ? 'border-red-300 shadow-sm shadow-red-100'
-                    : 'border-stone-200 hover:border-stone-300 hover:shadow-sm'
+            ref={setNodeRef}
+            style={style}
+            className={`group relative bg-white border rounded-2xl transition-colors ${
+                isDragging
+                    ? 'opacity-50 shadow-xl border-indigo-400 z-50'
+                    : isError
+                      ? 'border-red-300 shadow-sm shadow-red-100'
+                      : 'border-stone-200 hover:border-stone-300 hover:shadow-sm'
             }`}
         >
             {/* 타입 뱃지 */}
             <div className="flex items-center justify-between px-4 pt-3.5 pb-2 ">
-                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                <span className="flex items-center gap-1 text-xs text-black font-medium">
+                    {/* 드래그 트리거 영역 */}
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="cursor-move text-stone-500 hover:text-stone-500 transition-colors focus:outline-none"
+                    >
+                        <Menu className="size-4 " />
+                    </div>
                     {TYPE_ICON[item.type]}
                     {TYPE_LABEL[item.type]}
                 </span>
@@ -92,12 +121,16 @@ export default function FormItemCard({ item, errorId }: Props) {
                         </span>
                         <div
                             className={`relative w-9 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                item.required ? 'bg-indigo-500' : 'bg-stone-300 group-hover:bg-stone-400'
+                                item.required
+                                    ? 'bg-indigo-500'
+                                    : 'bg-stone-300 group-hover:bg-stone-400'
                             }`}
                         >
                             <div
                                 className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
-                                    item.required ? 'translate-x-4' : 'translate-x-0'
+                                    item.required
+                                        ? 'translate-x-4'
+                                        : 'translate-x-0'
                                 }`}
                             />
                         </div>
@@ -105,7 +138,9 @@ export default function FormItemCard({ item, errorId }: Props) {
                             type="checkbox"
                             checked={item.required || false}
                             onChange={() =>
-                                updateItem(item.id, { required: !item.required })
+                                updateItem(item.id, {
+                                    required: !item.required,
+                                })
                             }
                             className="sr-only"
                         />

@@ -3,6 +3,20 @@
 import { useFormContext } from '@/context/FormContext';
 import FormItemCard from './FormItem';
 import AddItemButton from './AddItemButton';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface Props {
     errorId: string | null;
@@ -10,7 +24,27 @@ interface Props {
 }
 
 export default function FormEditor({ errorId, onClearError }: Props) {
-    const { form, lastUsedType, addItem, updateTitle } = useFormContext();
+    const { form, lastUsedType, addItem, updateTitle, reorderItem } = useFormContext();
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = form!.items.findIndex((item) => item.id === active.id);
+            const newIndex = form!.items.findIndex((item) => item.id === over.id);
+            
+            if (oldIndex !== -1 && newIndex !== -1) {
+                reorderItem(oldIndex, newIndex);
+            }
+        }
+    };
 
     if (!form) {
         return (
@@ -37,9 +71,20 @@ export default function FormEditor({ errorId, onClearError }: Props) {
             </div>
 
             {/* 아이템 리스트 */}
-            {form.items.map((item) => (
-                <FormItemCard key={item.id} item={item} errorId={errorId} />
-            ))}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={form.items.map((item) => item.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    {form.items.map((item) => (
+                        <FormItemCard key={item.id} item={item} errorId={errorId} />
+                    ))}
+                </SortableContext>
+            </DndContext>
 
             {/* 추가 버튼 */}
             <div className="flex justify-center pt-2 pb-8">
