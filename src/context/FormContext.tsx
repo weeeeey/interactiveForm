@@ -29,6 +29,7 @@ interface FormContextValue {
         firstErrorId: string | null;
         firstErrorItemId: string | null;
     };
+    createForm: (formId: string) => void;
 }
 
 const FormContext = createContext<FormContextValue | null>(null);
@@ -62,6 +63,7 @@ export function FormProvider({
                 items: [],
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
+                isCreate: false,
             };
             setForm(newForm);
             saveForm(newForm);
@@ -223,7 +225,7 @@ export function FormProvider({
                 return { ...prev, items: newItems };
             });
         },
-        [setFormAndPersist]
+        [setFormAndPersist],
     );
 
     const validate = useCallback((): {
@@ -244,7 +246,11 @@ export function FormProvider({
                 };
             }
             // radio/select/checkbox: 옵션 없거나 빈 옵션 있으면 에러
-            if (item.type === 'radio' || item.type === 'select' || item.type === 'checkbox') {
+            if (
+                item.type === 'radio' ||
+                item.type === 'select' ||
+                item.type === 'checkbox'
+            ) {
                 const options = item.options ?? [];
                 if (options.length === 0) {
                     return {
@@ -266,6 +272,18 @@ export function FormProvider({
         return { valid: true, firstErrorId: null, firstErrorItemId: null };
     }, [form]);
 
+    const createForm = useCallback(
+        (formId: string) => {
+            setFormAndPersist((p) => {
+                if (p && p.id === formId) {
+                    return { ...p, isCreate: true };
+                }
+                return p;
+            });
+        },
+        [setFormAndPersist],
+    );
+
     return (
         <FormContext.Provider
             value={{
@@ -281,6 +299,7 @@ export function FormProvider({
                 updateTitle,
                 reorderItem,
                 validate,
+                createForm,
             }}
         >
             {children}

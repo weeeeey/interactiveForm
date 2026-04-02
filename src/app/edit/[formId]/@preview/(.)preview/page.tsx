@@ -7,23 +7,23 @@ import PreviewModal from '@/components/preview/PreviewModal';
 import FormPreview from '@/components/preview/FormPreview';
 
 export default function PreviewInterceptPage({
-  params,
+    params,
 }: {
-  params: Promise<{ formId: string }>;
+    params: Promise<{ formId: string }>;
 }) {
-  const { formId } = use(params);
-  const [form, setForm] = useState<Form | null>(null);
+    const { formId } = use(params);
+    const [form, setForm] = useState<Form | null>(null);
 
-  useEffect(() => {
-    const f = getForm(formId);
-    setForm(f);
-  }, [formId]);
+    useEffect(() => {
+        const f = getForm(formId);
+        setForm(f);
+    }, [formId]);
 
-  if (!form) return null;
+    if (!form) return null;
 
-  return (
-    <PreviewModal>
-      <FormPreview form={form} />
-    </PreviewModal>
-  );
+    return (
+        <PreviewModal formId={formId}>
+            <FormPreview form={form} />
+        </PreviewModal>
+    );
 }

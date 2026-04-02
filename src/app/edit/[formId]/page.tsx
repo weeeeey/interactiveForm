@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye } from 'lucide-react';
-import { FormProvider, useFormContext } from '@/context/FormContext';
+import { useFormContext } from '@/context/FormContext';
 import FormEditor from '@/components/form-editor/FormEditor';
 import Header from '@/components/ui/header';
 import Button from '@/components/ui/button';
@@ -74,12 +74,12 @@ export default function EditPage({
     const [errorId, setErrorId] = useState<string | null>(null);
 
     return (
-        <FormProvider formId={formId}>
+        <>
             <EditPageInner
                 formId={formId}
                 errorId={errorId}
                 setErrorId={setErrorId}
             />
-        </FormProvider>
+        </>
     );
 }

@@ -2,20 +2,50 @@
 
 import { Form } from '@/types/form';
 import { ChevronDown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 interface Props {
     form: Form;
+    onSubmit?: (data: Record<string, string | string[]>) => void;
 }
 
 export default function FormPreview({ form }: Props) {
-    const router = useRouter();
-    const handleSubmit = () => {
-        router.push('/');
+    const handleActualSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+
+        for (const item of form.items) {
+            if (item.type === 'checkbox' && item.required) {
+                const values = formData.getAll(`checkbox-${item.id}`);
+                if (values.length === 0) {
+                    alert(
+                        `"${item.label}" 항목은 필수입니다. 하나 이상 선택해주세요.`,
+                    );
+                    return;
+                }
+            }
+        }
+
+        const compiledData: Record<string, string | string[]> = {};
+        for (const item of form.items) {
+            if (item.type === 'checkbox') {
+                compiledData[item.label] = formData.getAll(
+                    `checkbox-${item.id}`,
+                ) as string[];
+            } else if (item.type === 'radio') {
+                compiledData[item.label] =
+                    (formData.get(`radio-${item.id}`) as string) || '';
+            } else {
+                compiledData[item.label] =
+                    (formData.get(item.id) as string) || '';
+            }
+        }
+
+        console.log('---[폼 제출 데이터]---');
+        console.log(compiledData);
     };
 
     return (
-        <div className="space-y-4">
+        <form onSubmit={handleActualSubmit} className="space-y-4">
             {/* 폼 제목 카드 */}
             <div className="bg-white border-t-4 border-t-stone-900 border border-stone-200 rounded-2xl px-5 py-5">
                 <h1 className="text-2xl font-bold text-stone-800">
@@ -35,13 +65,19 @@ export default function FormPreview({ form }: Props) {
                     <label className="block text-sm font-semibold text-stone-800">
                         {item.label}
                         {item.required && (
-                            <span className="text-red-400 ml-0.5" title="필수 항목">*</span>
+                            <span
+                                className="text-red-400 ml-0.5"
+                                title="필수 항목"
+                            >
+                                *
+                            </span>
                         )}
                     </label>
 
                     {item.type === 'input' && (
                         <input
                             type="text"
+                            name={item.id}
                             required={item.required}
                             placeholder={
                                 item.placeholder || '답변을 입력하세요'
@@ -52,6 +88,7 @@ export default function FormPreview({ form }: Props) {
 
                     {item.type === 'textarea' && (
                         <textarea
+                            name={item.id}
                             required={item.required}
                             placeholder={
                                 item.placeholder || '답변을 입력하세요'
@@ -107,6 +144,7 @@ export default function FormPreview({ form }: Props) {
                     {item.type === 'select' && (
                         <div className="relative">
                             <select
+                                name={item.id}
                                 required={item.required}
                                 defaultValue={
                                     item.defaultOptionId
@@ -138,14 +176,13 @@ export default function FormPreview({ form }: Props) {
             {form.items.length > 0 && (
                 <div className="pb-8">
                     <button
-                        type="button"
-                        onClick={handleSubmit}
+                        type="submit"
                         className="w-full bg-stone-900 text-white font-medium py-3 rounded-2xl hover:bg-stone-700 transition-colors"
                     >
                         제출하기
                     </button>
                 </div>
             )}
-        </div>
+        </form>
     );
 }

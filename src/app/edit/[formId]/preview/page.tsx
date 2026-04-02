@@ -6,6 +6,7 @@ import { Form } from '@/types/form';
 import { getForm } from '@/lib/storage';
 import FormPreview from '@/components/preview/FormPreview';
 import Header from '@/components/ui/header';
+import CreateFormButton from '@/components/preview/CreateFormButton';
 
 export default function PreviewPage({
     params,
@@ -31,14 +32,15 @@ export default function PreviewPage({
     return (
         <>
             <Header>
-                <Link
-                    href={`/edit/${formId}`}
-                    className="flex items-center gap-2  hover:text-stone-200 transition-colors bg-black text-white px-4 py-2 rounded-full"
-                >
-                    <span className="text-sm font-medium">
+                <div className="flex items-center gap-x-2">
+                    <Link
+                        href={`/edit/${formId}`}
+                        className=" hover:bg-slate-300 transition-colors bg-slate-400 text-white px-2 py-1 rounded-md"
+                    >
                         편집으로 돌아가기
-                    </span>
-                </Link>
+                    </Link>
+                    <CreateFormButton formId={formId} />
+                </div>
             </Header>
             <main className="min-h-screen max-w-3xl mx-auto px-4 sm:px-6 py-6 min-w-[384px] bg-stone-50 border-x-2  ">
                 <FormPreview form={form} />
