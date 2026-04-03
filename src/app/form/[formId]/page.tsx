@@ -12,6 +12,11 @@ interface FormIdPageProps {
     }>;
 }
 
+/**
+ * 폼 응답 제출 페이지 컴포넌트입니다. (배포용)
+ * isCreate 상태가 true인 경우에만 폼을 렌더링하며,
+ * 실제 사용자가 답변을 입력하고 제출할 수 있는 인터페이스를 제공합니다.
+ */
 export default function FormIdPage({ params }: FormIdPageProps) {
     const { formId } = use(params);
     const [form, setForm] = useState<Form | null>(null);

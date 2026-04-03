@@ -23,6 +23,10 @@ interface Props {
     onClearError: () => void;
 }
 
+/**
+ * 폼 에디터의 주 본문 컴포넌트입니다.
+ * 폼 제목의 인라인 편집과 아이템 목록의 드래그 앤 드롭 순서 변경을 담당합니다.
+ */
 export default function FormEditor({ errorId, onClearError }: Props) {
     const { form, lastUsedType, addItem, updateTitle, reorderItem } = useFormContext();
 

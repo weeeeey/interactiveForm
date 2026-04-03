@@ -8,6 +8,11 @@ interface Props {
     onSubmit?: (data: Record<string, string | string[]>) => void;
 }
 
+/**
+ * 완성된 폼의 모습을 미리보거나 실제 응답용으로 렌더링하는 컴포넌트입니다.
+ * HTML5 네이티브 유효성 검사 및 체크박스 필수에 대한 커스텀 검증 로직을 포함하며,
+ * 제출 시 데이터를 객체 형태로 구조화하여 처리합니다.
+ */
 export default function FormPreview({ form }: Props) {
     const handleActualSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

@@ -9,6 +9,11 @@ import Header from '@/components/ui/header';
 import Button from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 
+/**
+ * 홈 페이지 컴포넌트입니다.
+ * 저장된 모든 폼 목록을 불러와 '생성 된 폼'과 '생성중인 폼'으로 분류하여 보여줍니다.
+ * 새로운 폼을 생성하거나 기존 폼을 수정/삭제할 수 있는 진입점 역할을 합니다.
+ */
 export default function HomePage() {
     const router = useRouter();
     const [forms, setForms] = useState<Form[]>([]);

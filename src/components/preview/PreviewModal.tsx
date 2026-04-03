@@ -10,6 +10,11 @@ interface Props {
     formId: string;
 }
 
+/**
+ * 미리보기 화면을 모달로 감싸는 래퍼 컴포넌트입니다.
+ * 배경 클릭, ESC 키 입력 등으로 모달을 닫는 UX 기능과
+ * 모바일(바텀 시트) 및 데스크탑(중앙 모달) 반응형 레이아웃을 제공합니다.
+ */
 export default function PreviewModal({ children, formId }: Props) {
     const router = useRouter();
 

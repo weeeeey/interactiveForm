@@ -38,6 +38,11 @@ interface Props {
     errorId: string | null;
 }
 
+/**
+ * 개별 폼 질문(아이템)을 렌더링하는 카드 컴포넌트입니다.
+ * 질문 제목, 타입 선택, 옵션 관리(추가/삭제/수정) 등을 담당하며,
+ * dnd-kit을 통해 드래그 앤 드롭 이동이 가능합니다.
+ */
 export default function FormItemCard({ item, errorId }: Props) {
     const { updateItem, deleteItem, addOption, updateOption, deleteOption } =
         useFormContext();

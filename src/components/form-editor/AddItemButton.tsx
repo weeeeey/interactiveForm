@@ -46,6 +46,11 @@ const TYPE_CONFIG: { type: ItemType; label: string; icon: React.ReactNode }[] =
         },
     ];
 
+/**
+ * 새로운 폼 아이템을 추가하기 위한 버튼 컴포넌트입니다.
+ * '추가하기' 클릭 시 마지막으로 사용한 타입으로 아이템을 즉시 추가하거나,
+ * 드롭다운을 통해 특정 타입을 선택하여 추가할 수 있습니다.
+ */
 export default function AddItemButton({ lastUsedType, onAdd }: Props) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);

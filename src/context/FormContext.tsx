@@ -34,6 +34,10 @@ interface FormContextValue {
 
 const FormContext = createContext<FormContextValue | null>(null);
 
+/**
+ * FormContext를 사용하기 위한 커스텀 훅입니다.
+ * 반드시 FormProvider 내부에서 호출되어야 합니다.
+ */
 export function useFormContext() {
     const ctx = useContext(FormContext);
     if (!ctx)
@@ -41,6 +45,10 @@ export function useFormContext() {
     return ctx;
 }
 
+/**
+ * 애플리케이션의 폼 상태를 관리하는 Provider 컴포넌트입니다.
+ * localStorage와의 동기화 및 폼 편집 로직을 캡슐화합니다.
+ */
 export function FormProvider({
     children,
     formId,
@@ -70,6 +78,9 @@ export function FormProvider({
         }
     }, [formId]);
 
+    /**
+     * 폼 데이터를 localStorage에 비동기적으로 저장합니다. (디바운스 적용)
+     */
     const persist = useCallback((updated: Form) => {
         if (saveTimer.current) clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => {
@@ -77,6 +88,9 @@ export function FormProvider({
         }, 400);
     }, []);
 
+    /**
+     * 상태를 업데이트하고 자동으로 저장을 트리거하는 헬퍼 함수입니다.
+     */
     const setFormAndPersist = useCallback(
         (updater: (prev: Form) => Form) => {
             setForm((prev) => {
@@ -89,6 +103,10 @@ export function FormProvider({
         [persist],
     );
 
+    /**
+     * 새로운 폼 아이템을 추가합니다.
+     * 타입에 따라 초기 옵션이나 플레이스홀더를 설정합니다.
+     */
     const addItem = useCallback(
         (type: ItemType) => {
             const initialOptionId = generateId();
@@ -115,6 +133,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 특정 아이템의 정보를 업데이트합니다.
+     */
     const updateItem = useCallback(
         (id: string, patch: Partial<FormItem>) => {
             setFormAndPersist((prev) => ({
@@ -127,6 +148,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 아이템을 삭제합니다.
+     */
     const deleteItem = useCallback(
         (id: string) => {
             setFormAndPersist((prev) => ({
@@ -137,6 +161,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 선택형 아이템(radio, select, checkbox)에 새로운 옵션을 추가합니다.
+     */
     const addOption = useCallback(
         (itemId: string) => {
             const newOpt: FormItemOption = { id: generateId(), value: '' };
@@ -155,6 +182,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 특정 옵션의 텍스트 값을 수정합니다.
+     */
     const updateOption = useCallback(
         (itemId: string, optionId: string, value: string) => {
             setFormAndPersist((prev) => ({
@@ -174,6 +204,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 특정 옵션을 삭제합니다. 삭제 시 기본값(defaultOptionId) 설정도 체크합니다.
+     */
     const deleteOption = useCallback(
         (itemId: string, optionId: string) => {
             setFormAndPersist((prev) => ({
@@ -209,6 +242,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 폼의 전체 제목을 업데이트합니다.
+     */
     const updateTitle = useCallback(
         (title: string) => {
             setFormAndPersist((prev) => ({ ...prev, title }));
@@ -216,6 +252,9 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * dnd-kit을 통해 드래그 앤 드롭된 아이템의 순서를 변경합니다.
+     */
     const reorderItem = useCallback(
         (oldIndex: number, newIndex: number) => {
             setFormAndPersist((prev) => {
@@ -228,6 +267,10 @@ export function FormProvider({
         [setFormAndPersist],
     );
 
+    /**
+     * 폼 전체의 유효성을 검사합니다.
+     * 라벨 누락, 옵션 누락, 빈 옵션 여부 등을 체크하여 첫 번째 에러 정보를 반환합니다.
+     */
     const validate = useCallback((): {
         valid: boolean;
         firstErrorId: string | null;
@@ -272,6 +315,9 @@ export function FormProvider({
         return { valid: true, firstErrorId: null, firstErrorItemId: null };
     }, [form]);
 
+    /**
+     * 폼을 공식적으로 발행(생성 완료) 상태로 변경합니다.
+     */
     const createForm = useCallback(
         (formId: string) => {
             setFormAndPersist((p) => {

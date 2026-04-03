@@ -65,6 +65,10 @@ function EditPageInner({
     );
 }
 
+/**
+ * 편집 페이지의 루트 컴포넌트입니다.
+ * URL 파라미터에서 formId를 추출하고 에디터의 상태(에러 등)를 관리합니다.
+ */
 export default function EditPage({
     params,
 }: {
