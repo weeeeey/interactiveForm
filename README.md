@@ -38,33 +38,42 @@ Google Forms처럼 사용자가 직접 폼을 만들고 미리볼 수 있는 웹
 ```
 src/
 ├── app/
-│   ├── layout.tsx                                   # 루트 레이아웃
+│   ├── layout.tsx                                   # 루트 레이아웃 (FormProvider 포함)
 │   ├── globals.css                                  # Tailwind 전역 CSS
-│   ├── page.tsx                                     # 홈 페이지 (폼 리스트)
-│   └── edit/
+│   ├── page.tsx                                     # 홈 페이지 (폼 리스트: 생성됨/생성중 분리)
+│   ├── edit/
+│   │   └── [formId]/
+│   │       ├── layout.tsx                           # Parallel Route + FormProvider 레이아웃
+│   │       ├── page.tsx                             # 편집 페이지
+│   │       ├── preview/
+│   │       │   └── page.tsx                         # 직접 접근 시 전체 미리보기 페이지
+│   │       └── @preview/                            # Parallel Route 슬롯
+│   │           ├── default.tsx                      # 기본 슬롯 (null 렌더링)
+│   │           └── (.)preview/
+│   │               └── page.tsx                     # Route Interception → 모달 렌더링
+│   └── form/
 │       └── [formId]/
-│           ├── layout.tsx                           # Parallel Route 레이아웃
-│           ├── page.tsx                             # 편집 페이지
-│           ├── preview/
-│           │   └── page.tsx                         # 직접 접근 시 전체 미리보기 페이지
-│           └── @preview/                            # Parallel Route 슬롯
-│               ├── default.tsx                      # 기본 슬롯 (null 렌더링)
-│               └── (.)preview/
-│                   └── page.tsx                     # Route Interception → 모달 렌더링
+│           └── page.tsx                             # 실제 폼 응답 페이지 (isCreate 검증)
 ├── components/
+│   ├── ui/                                          # 공통 UI 컴포넌트
+│   │   ├── header.tsx                               # 공통 헤더
+│   │   └── button.tsx                               # 공통 스타일 버튼
 │   ├── form-editor/
-│   │   ├── FormEditor.tsx                           # 에디터 컨테이너
-│   │   ├── FormItem.tsx                             # 개별 아이템 카드
-│   │   └── AddItemButton.tsx                        # 추가하기 버튼 + 타입 드롭다운
+│   │   ├── FormEditor.tsx                           # 에디터 컨테이너 (DndContext 포함)
+│   │   ├── FormItem.tsx                             # 개별 아이템 카드 (Sortable 적용)
+│   │   ├── AddItemButton.tsx                        # 추가하기 버튼 + 타입 드롭다운
+│   │   └── error-banner.tsx                         # 검증 에러 알림 배너
 │   └── preview/
-│       ├── FormPreview.tsx                          # 완성된 폼 렌더링
-│       └── PreviewModal.tsx                         # 모달 래퍼 (ESC, 오버레이 닫기)
+│       ├── FormPreview.tsx                          # 완성된 폼 렌더링 & 제출 로직
+│       ├── CreateFormButton.tsx                     # 폼 생성(발행) 버튼
+│       └── PreviewModal.tsx                         # 모달 래퍼
 ├── context/
-│   └── FormContext.tsx                              # 전역 폼 상태 + 모든 CRUD + validate
+│   └── FormContext.tsx                              # 전역 폼 상태 + CRUD + DND + validate
 ├── types/
-│   └── form.ts                                      # 타입 정의
+│   └── form.ts                                      # 타입 정의 (ItemType, FormItem, Form)
 └── lib/
-    └── storage.ts                                   # localStorage CRUD 유틸
+    ├── storage.ts                                   # localStorage CRUD 유틸
+    └── utils.ts                                     # 공통 유틸 (날짜 포맷 등)
 ```
 
 ---
@@ -76,10 +85,10 @@ src/
 ### `ItemType`
 
 ```ts
-type ItemType = 'input' | 'textarea' | 'radio' | 'select';
+type ItemType = 'input' | 'textarea' | 'radio' | 'select' | 'checkbox';
 ```
 
-아이템이 될 수 있는 컨텐츠 유형 4가지입니다.
+아이템이 될 수 있는 컨텐츠 유형 5가지입니다.
 
 ### `FormItemOption`
 
@@ -90,7 +99,7 @@ interface FormItemOption {
 }
 ```
 
-`radio`, `select` 타입 아이템의 선택지 단위입니다.
+`radio`, `select`, `checkbox` 타입 아이템의 선택지 단위입니다.
 
 ### `FormItem`
 
@@ -99,8 +108,10 @@ interface FormItem {
     id: string;
     type: ItemType;
     label: string; // 질문 제목 (필수, 비어있으면 validation 에러)
+    required: boolean; // 필수 답변 여부
     placeholder?: string; // input, textarea 전용 — 미리보기에서 placeholder로 사용
-    options?: FormItemOption[]; // radio, select 전용
+    options?: FormItemOption[]; // radio, select, checkbox 전용
+    defaultOptionId?: string; // select 전용 기본값 옵션 ID
 }
 ```
 
@@ -111,8 +122,19 @@ interface Form {
     id: string;
     title: string;
     items: FormItem[];
+    isCreate: boolean; // 폼 생성(발행) 완료 여부
     createdAt: number; // Unix timestamp
     updatedAt: number; // Unix timestamp — 홈에서 최신순 정렬에 사용
+}
+```
+
+### `ValidationResult`
+
+```ts
+interface ValidationResult {
+    valid: boolean;
+    firstErrorId: string | null; // 에러가 발생한 첫 번째 요소의 DOM ID
+    firstErrorItemId: string | null; // 에러가 발생한 첫 번째 아이템의 고유 ID
 }
 ```
 
@@ -162,14 +184,16 @@ const persist = useCallback((updated: Form) => {
 | `form`            | `Form \| null`                   | 현재 편집 중인 폼 상태                                                                      |
 | `lastUsedType`    | `ItemType`                       | 마지막으로 추가한 아이템 타입 — 추가하기 버튼 기본값으로 사용                               |
 | `setLastUsedType` | `(type) => void`                 | 마지막 타입 업데이트                                                                        |
-| `addItem`         | `(type) => void`                 | 새 아이템 추가. `input/textarea`는 `placeholder: ''`, `radio/select`는 빈 옵션 1개로 초기화 |
+| `addItem`         | `(type) => void`                 | 새 아이템 추가. `input/textarea`는 `placeholder: ''`, `radio/select/checkbox`는 빈 옵션 1개로 초기화 |
 | `updateItem`      | `(id, patch) => void`            | 특정 아이템 부분 업데이트                                                                   |
 | `deleteItem`      | `(id) => void`                   | 특정 아이템 삭제                                                                            |
-| `addOption`       | `(itemId) => void`               | `radio/select` 아이템에 옵션 추가                                                           |
+| `addOption`       | `(itemId) => void`               | `radio/select/checkbox` 아이템에 옵션 추가                                                  |
 | `updateOption`    | `(itemId, optId, value) => void` | 특정 옵션 값 수정                                                                           |
 | `deleteOption`    | `(itemId, optId) => void`        | 특정 옵션 삭제                                                                              |
 | `updateTitle`     | `(title) => void`                | 폼 제목 수정                                                                                |
+| `reorderItem`     | `(oldIndex, newIndex) => void`   | 드래그 앤 드롭(dnd-kit)을 통한 아이템 순서 변경                                             |
 | `validate`        | `() => ValidationResult`         | 미리보기 전 전체 유효성 검사                                                                |
+| `createForm`      | `(formId) => void`               | 폼 발행 상태(`isCreate`)를 true로 변경                                                      |
 
 ### 내부 패턴 — `setFormAndPersist`
 
@@ -322,6 +346,7 @@ props:
 | `textarea`  | `<textarea>` with placeholder               |
 | `radio`     | 커스텀 라디오 버튼 리스트 (CSS 원형 아이콘) |
 | `select`    | `<select>` with 옵션들                      |
+| `checkbox`  | 커스텀 체크박스 리스트 (Lucide 아이콘 활용) |
 
 ### `PreviewModal.tsx`
 
@@ -350,7 +375,7 @@ props:
   ├── label이 비어있음?
   │     → { valid: false, firstErrorId: "label-{itemId}", firstErrorItemId: itemId }
   │
-  └── type이 radio 또는 select?
+  └── type이 radio, select 또는 checkbox?
         ├── options 배열이 비어있음?
         │     → { valid: false, firstErrorId: "option-{itemId}", firstErrorItemId: itemId }
         │
