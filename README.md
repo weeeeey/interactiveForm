@@ -17,7 +17,6 @@ Google Forms처럼 사용자가 직접 폼을 만들고 미리볼 수 있는 웹
 9. [Validation 로직](#9-validation-로직)
 10. [미리보기 — Parallel Route + Route Interception](#10-미리보기--parallel-route--route-interception)
 11. [설치 및 실행](#11-설치-및-실행)
-12. [주요 설계 결정 및 이유](#12-주요-설계-결정-및-이유)
 
 ---
 
@@ -474,29 +473,3 @@ npm start
 
 - Node.js 18.17 이상
 - npm 또는 yarn
-
----
-
-## 12. 주요 설계 결정 및 이유
-
-### localStorage vs 서버 DB
-
-별도 백엔드 없이 클라이언트만으로 완결되는 구조를 택했습니다. 추후 Supabase 등으로 교체 시 `src/lib/storage.ts`의 함수 시그니처만 유지하면 Context 이상의 코드는 변경이 필요 없습니다.
-
-### Context API vs Zustand/Jotai
-
-폼 편집 페이지 단위의 상태이므로 전역 상태 라이브러리 없이 Context만으로 충분합니다. `FormProvider`가 `formId`를 받아 초기화하므로 여러 탭에서 다른 폼을 동시에 편집해도 독립적으로 동작합니다.
-
-### `firstErrorItemId`를 별도로 반환하는 이유
-
-`firstErrorId`의 포맷(`label-{id}`, `option-{id}`, `option-{id}-{optId}`)에서 itemId를 파싱하려면 문자열 조작이 필요합니다. `generateId()`는 Base36 랜덤 문자열이라 `-`를 포함할 수 없지만, 파싱 로직이 복잡해지는 것을 피하고 명확성을 위해 `firstErrorItemId`를 별도로 반환했습니다.
-
-### 인라인 편집 (inline editing)
-
-모달이나 사이드 패널 없이 카드 자체에서 바로 편집하는 방식을 택했습니다. `수정하기` 클릭 시 라벨 input에 포커스를 주는 것으로 충분하며, 불필요한 UI 레이어를 줄여 모바일에서도 쾌적한 경험을 제공합니다.
-
-### 모바일 퍼스트 레이아웃
-
-- 최소 너비 `min-w-[384px]` (sm 기준)
-- 최대 너비 `max-w-3xl`로 데스크탑에서 과도하게 넓어지는 것 방지
-- 미리보기 모달은 모바일에서 `items-end` (bottom sheet), 데스크탑에서 `sm:items-center` (center modal)로 각 환경에 최적화
